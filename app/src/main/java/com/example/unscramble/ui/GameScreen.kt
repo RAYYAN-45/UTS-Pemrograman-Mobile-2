@@ -16,6 +16,7 @@
 package com.example.unscramble.ui
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -59,10 +60,9 @@ import com.example.unscramble.R
 import com.example.unscramble.ui.theme.UnscrambleTheme
 
 @Composable
-fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
+fun GameScreen(gameViewModel: GameViewModel = viewModel(factory = GameViewModel.Factory)) {
     val gameUiState by gameViewModel.uiState.collectAsState()
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
-//    val addword by AddScreen()
 
     Column(
         modifier = Modifier
@@ -121,17 +121,38 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
 
         GameStatus(score = gameUiState.score, modifier = Modifier.padding(20.dp))
 
-        OutlinedButton(
+        val context = LocalContext.current
+        AddLayout(
+            isGuessWrong = false,
+            userGuess = gameViewModel.userGuess,
+            onUserGuessChanged = { gameViewModel.updateUserGuess(it) },
+            onKeyboardDone = {
+                gameViewModel.addNewWord(
+                    newWord = gameViewModel.userGuess,
+                    onSuccess = {
+                        Toast.makeText(context, "Kata baru berhasil disimpan!", Toast.LENGTH_SHORT).show()
+                        gameViewModel.updateUserGuess("")
+                    },
+                    onEmpty = {
+                        Toast.makeText(context, "Kata tidak boleh kosong!", Toast.LENGTH_SHORT).show()
+                    }
+                ) },
+            onAddWordClicked = {
+                gameViewModel.addNewWord(
+                    newWord = gameViewModel.userGuess,
+                    onSuccess = {
+                        Toast.makeText(context, "Kata baru berhasil disimpan!", Toast.LENGTH_SHORT).show()
+                        gameViewModel.updateUserGuess("")
+                    },
+                    onEmpty = {
+                        Toast.makeText(context, "Kata tidak boleh kosong!", Toast.LENGTH_SHORT).show()
+                    }
+                )},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(mediumPadding),
-            onClick = { gameViewModel.checkUserGuess() }
-        ) {
-            Text(
-                text = stringResource(R.string.add_word),
-                fontSize = 16.sp
-            )
-        }
+                .wrapContentHeight()
+                .padding(mediumPadding)
+        )
 
         if (gameUiState.isGameOver) {
             FinalScoreDialog(
@@ -226,6 +247,69 @@ fun GameLayout(
     }
 }
 
+@Composable
+fun AddLayout(
+    onAddWordClicked: () -> Unit,
+    isGuessWrong: Boolean,
+    userGuess: String,
+    onUserGuessChanged: (String) -> Unit,
+    onKeyboardDone: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val mediumPadding = dimensionResource(R.dimen.padding_medium)
+
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(mediumPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(mediumPadding)
+        ) {
+            Text(
+                text = stringResource(R.string.add_instructions),
+                textAlign = TextAlign.Center,
+                style = typography.titleMedium
+            )
+            OutlinedTextField(
+                value = userGuess,
+                singleLine = true,
+                shape = shapes.large,
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = colorScheme.surface,
+                    unfocusedContainerColor = colorScheme.surface,
+                    disabledContainerColor = colorScheme.surface,
+                ),
+                onValueChange = onUserGuessChanged,
+                label = {
+                    if (isGuessWrong) {
+                        Text(stringResource(R.string.empty_new_word))
+                    } else {
+                        Text(stringResource(R.string.enter_new_word))
+                    }
+                },
+                isError = isGuessWrong,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { onKeyboardDone() }
+                )
+            )
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onAddWordClicked
+            ) {
+                Text(
+                    text = stringResource(R.string.add_word),
+                    fontSize = 16.sp
+                )
+            }
+        }
+    }
+}
 
 /*
  * Creates and shows an AlertDialog with final score.
@@ -263,42 +347,6 @@ private fun FinalScoreDialog(
         }
     )
 }
-
-
-@Composable
-private fun AddWordDialog(
-    score: Int,
-    onPlayAgain: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val activity = (LocalContext.current as Activity)
-
-    AlertDialog(
-        onDismissRequest = {
-            // Dismiss the dialog when the user clicks outside the dialog or on the back
-            // button. If you want to disable that functionality, simply use an empty
-            // onCloseRequest.
-        },
-        title = { Text(text = stringResource(R.string.congratulations)) },
-        text = { Text(text = stringResource(R.string.you_scored, score)) },
-        modifier = modifier,
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    activity.finish()
-                }
-            ) {
-                Text(text = stringResource(R.string.exit))
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onPlayAgain) {
-                Text(text = stringResource(R.string.play_again))
-            }
-        }
-    )
-}
-
 
 @Preview(showBackground = true)
 @Composable

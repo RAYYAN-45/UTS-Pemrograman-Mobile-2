@@ -27,6 +27,8 @@
     <string name="exit">Exit</string>
     <string name="play_again">Play Again</string>
     <string name="wrong_guess">Wrong Guess!</string>
-    <string name="add_word">Add a Word</string>
-    <string name="add_screen">Add a new word</string>
+    <string name="add_word">Add</string>
+    <string name="add_instructions">Add a new word</string>
+    <string name="enter_new_word">Enter New Word</string>
+    <string name="empty_new_word">Cannot be Empty</string>
 </resources>

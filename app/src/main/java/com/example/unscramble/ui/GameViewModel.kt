@@ -20,18 +20,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import com.example.unscramble.data.MAX_NO_OF_WORDS
 import com.example.unscramble.data.SCORE_INCREASE
+import com.example.unscramble.data.WordsRepository
 import com.example.unscramble.data.allWords
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import com.example.unscramble.UnscrambleApplication
 
 /**
  * ViewModel containing the app data and methods to process the data
  */
-class GameViewModel : ViewModel() {
+class GameViewModel(private val repository: WordsRepository) : ViewModel() {
 
     // Game UI state
     private val _uiState = MutableStateFlow(GameUiState())
@@ -94,8 +102,26 @@ class GameViewModel : ViewModel() {
 
 
     // add words from user function
-    fun addWord(){
+    fun addNewWord(newWord: String, onSuccess: () -> Unit, onEmpty: () -> Unit){
+        if (newWord.isNotBlank()){
+            viewModelScope.launch {
+                repository.insertWord(newWord.trim())
+                onSuccess()
+            }
+        }else{
+            onEmpty()
+        }
+    }
 
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                // Ambil UnscrambleApplication yang sudah kita buat tadi
+                val application = (this[APPLICATION_KEY] as UnscrambleApplication)
+                // Buat GameViewModel dengan memasukkan repository-nya
+                GameViewModel(application.repository)
+            }
+        }
     }
 
 
