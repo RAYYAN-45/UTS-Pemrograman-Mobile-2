@@ -62,6 +62,7 @@ import com.example.unscramble.ui.theme.UnscrambleTheme
 fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
     val gameUiState by gameViewModel.uiState.collectAsState()
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
+//    val addword by AddScreen()
 
     Column(
         modifier = Modifier
@@ -119,6 +120,18 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
         }
 
         GameStatus(score = gameUiState.score, modifier = Modifier.padding(20.dp))
+
+        OutlinedButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(mediumPadding),
+            onClick = { gameViewModel.checkUserGuess() }
+        ) {
+            Text(
+                text = stringResource(R.string.add_word),
+                fontSize = 16.sp
+            )
+        }
 
         if (gameUiState.isGameOver) {
             FinalScoreDialog(
@@ -213,6 +226,7 @@ fun GameLayout(
     }
 }
 
+
 /*
  * Creates and shows an AlertDialog with final score.
  */
@@ -249,6 +263,42 @@ private fun FinalScoreDialog(
         }
     )
 }
+
+
+@Composable
+private fun AddWordDialog(
+    score: Int,
+    onPlayAgain: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val activity = (LocalContext.current as Activity)
+
+    AlertDialog(
+        onDismissRequest = {
+            // Dismiss the dialog when the user clicks outside the dialog or on the back
+            // button. If you want to disable that functionality, simply use an empty
+            // onCloseRequest.
+        },
+        title = { Text(text = stringResource(R.string.congratulations)) },
+        text = { Text(text = stringResource(R.string.you_scored, score)) },
+        modifier = modifier,
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    activity.finish()
+                }
+            ) {
+                Text(text = stringResource(R.string.exit))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onPlayAgain) {
+                Text(text = stringResource(R.string.play_again))
+            }
+        }
+    )
+}
+
 
 @Preview(showBackground = true)
 @Composable
